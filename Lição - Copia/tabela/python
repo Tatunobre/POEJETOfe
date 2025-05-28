@@ -1,0 +1,49 @@
+import sqlite3
+
+# Conexão com banco SQLite (arquivo local produtos.db)
+conn = sqlite3.connect('produtos.db')
+cursor = conn.cursor()
+
+# Criação da tabela produtos conforme a estrutura definida
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS produtos (
+    id_produto INTEGER PRIMARY KEY AUTOINCREMENT,
+    nome_produto TEXT NOT NULL,
+    categoria TEXT NOT NULL,
+    preco REAL NOT NULL CHECK(preco >= 0),
+    quantidade_estoque INTEGER NOT NULL CHECK(quantidade_estoque >= 0),
+    data_adicao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    status TEXT NOT NULL CHECK(status IN ('Disponível', 'Indisponível', 'Descontinuado'))
+)
+''')
+
+conn.commit()
+
+def inserir_produto(nome_produto, categoria, preco, quantidade_estoque, status):
+    cursor.execute('''
+    INSERT INTO produtos (nome_produto, categoria, preco, quantidade_estoque, status)
+    VALUES (?, ?, ?, ?, ?)
+    ''', (nome_produto, categoria, preco, quantidade_estoque, status))
+    conn.commit()
+    print(f'Produto "{nome_produto}" inserido com sucesso.')
+
+def listar_produtos():
+    cursor.execute('SELECT * FROM produtos')
+    produtos = cursor.fetchall()
+    for produto in produtos:
+        print(f'ID: {produto[0]} | Nome: {produto[1]} | Categoria: {produto[2]} | Preço: R${produto[3]:.2f} | Estoque: {produto[4]} | Data: {produto[5]} | Status: {produto[6]}')
+
+def main():
+    print('Inserindo produtos de exemplo...')
+    inserir_produto('Camiseta Polo', 'Roupas', 59.90, 100, 'Disponível')
+    inserir_produto('Tênis Esportivo', 'Calçados', 120.00, 50, 'Disponível')
+    print('\nListando produtos no banco:')
+    listar_produtos()
+
+if __name__ == '__main__':
+    main()
+
+    # Fechando conexão ao final
+    cursor.close()
+    conn.close()
+
