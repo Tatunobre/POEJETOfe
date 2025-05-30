@@ -1,0 +1,83 @@
+import sqlite3
+
+def criar_tabela(cursor):
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS Musicas (
+            ID INTEGER PRIMARY KEY AUTOINCREMENT,
+            Nome TEXT,
+            Cantor TEXT,
+            AnoLancamento INTEGER,
+            Genero TEXT,
+            JaOuvi TEXT
+        );
+    ''')
+
+def inserir_dados(cursor):
+    musicas = [
+        ('Bohemian Rhapsody', 'Queen', 1975, 'Rock', 'Sim'),
+        ('Thriller', 'Michael Jackson', 1982, 'Pop', 'Sim'),
+        ('Shape of You', 'Ed Sheeran', 2017, 'Pop', 'Sim'),
+        ('Blinding Lights', 'The Weeknd', 2019, 'Synthwave', 'Não'),
+        ('Yesterday', 'The Beatles', 1965, 'Rock', 'Sim'),
+        ('Rolling in the Deep', 'Adele', 2010, 'Soul', 'Não'),
+        ('Billie Jean', 'Michael Jackson', 1982, 'Pop', 'Sim'),
+        ('Someone Like You', 'Adele', 2011, 'Soul', 'Sim'),
+        ('Smells Like Teen Spirit', 'Nirvana', 1991, 'Grunge', 'Não'),
+        ('Hey Jude', 'The Beatles', 1968, 'Rock', 'Sim')
+    ]
+    cursor.executemany('''
+        INSERT INTO Musicas (Nome, Cantor, AnoLancamento, Genero, JaOuvi)
+        VALUES (?, ?, ?, ?, ?)
+    ''', musicas)
+
+def mostrar_todas_musicas(cursor):
+    print("Todas as músicas:")
+    cursor.execute('SELECT * FROM Musicas')
+    for linha in cursor.fetchall():
+        print(linha)
+
+def buscar_musicas_por_cantor(cursor, cantor):
+    print(f"\nMúsicas do cantor {cantor}:")
+    cursor.execute('SELECT Nome, AnoLancamento FROM Musicas WHERE Cantor = ?', (cantor,))
+    resultados = cursor.fetchall()
+    for musica in resultados:
+        print(musica)
+
+def buscar_musicas_genero_nao_ouvidas(cursor, genero):
+    print(f"\nMúsicas do gênero '{genero}' que ainda não ouvi:")
+    cursor.execute('SELECT Nome, Cantor FROM Musicas WHERE Genero = ? AND JaOuvi = "Não"', (genero,))
+    resultados = cursor.fetchall()
+    for musica in resultados:
+        print(musica)
+
+def atualizar_ja_ouvi(cursor, nome_musica):
+    cursor.execute('UPDATE Musicas SET JaOuvi = "Sim" WHERE Nome = ?', (nome_musica,))
+    print(f'\nAtualizado: música "{nome_musica}" marcada como ouvida.')
+
+def deletar_musica(cursor, nome_musica):
+    cursor.execute('DELETE FROM Musicas WHERE Nome = ?', (nome_musica,))
+    print(f'\nDeletado: música "{nome_musica}" removida da coleção.')
+
+def main():
+    conexao = sqlite3.connect('minha_colecao_musicas.db')
+    cursor = conexao.cursor()
+
+    criar_tabela(cursor)
+    inserir_dados(cursor)
+    conexao.commit()
+
+    mostrar_todas_musicas(cursor)
+    buscar_musicas_por_cantor(cursor, 'Adele')
+    buscar_musicas_genero_nao_ouvidas(cursor, 'Pop')
+    atualizar_ja_ouvi(cursor, 'Blinding Lights')
+    conexao.commit()
+    deletar_musica(cursor, 'Smells Like Teen Spirit')
+    conexao.commit()
+
+    mostrar_todas_musicas(cursor)
+
+    cursor.close()
+    conexao.close()
+
+if __name__ == '__main__':
+    main()
